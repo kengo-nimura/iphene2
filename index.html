@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>モンスト反射シミュレータ（最小パーツ版）</title>
+    <title>モンスト反射シミュレータ（バランス調整版）</title>
     <style>
         body { margin: 0; background: #000; overflow: hidden; display: flex; flex-direction: column; height: 100vh; font-family: sans-serif; }
         #canvas-container { flex: 1; position: relative; background: #111; display: flex; justify-content: center; align-items: center; overflow: hidden; }
@@ -47,11 +47,11 @@ let img = null, start = {x:0, y:0}, target = {x:0, y:0}, maxRef = 1, blocks = []
 let draggingBlockIndex = -1, dragOffset = {x:0, y:0}, lastTapTime = 0;
 let m = { side: 15, top: 120, bottom: 230 };
 
-// --- 最小サイズ設定 ---
-const BLOCK_SIZE = 20; 
-const SNAP_DIST = 8;
-const CHAR_RADIUS = 10;
-const HORN_LENGTH = 8;
+// --- バランスを考慮した新サイズ ---
+const BLOCK_SIZE = 40; 
+const SNAP_DIST = 12;
+const CHAR_RADIUS = 20;
+const HORN_LENGTH = 15;
 
 function updateSliders(width, height) {
     const sMSlider = document.getElementById('sM');
@@ -155,7 +155,7 @@ function drawHex(x, y, size) {
     }
     ctx.closePath();
     ctx.strokeStyle = "#00ffff";
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2;
     ctx.stroke();
 }
 
@@ -164,12 +164,12 @@ function drawCharacter(x, y) {
     ctx.beginPath();
     ctx.arc(x, y, CHAR_RADIUS, 0, Math.PI * 2);
     ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
     ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
-    const inner = CHAR_RADIUS + 0.5;
+    ctx.lineWidth = 3;
+    const inner = CHAR_RADIUS + 1;
     const outer = inner + HORN_LENGTH;
 
     const angles = [Math.PI/4, 3*Math.PI/4, 5*Math.PI/4, 7*Math.PI/4];
@@ -187,7 +187,7 @@ function draw() {
     const L = m.side, R = canvas.width - m.side, T = m.top, B = canvas.height - m.bottom;
     
     ctx.strokeStyle = "#00ff00";
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 2;
     blocks.forEach((b) => { ctx.strokeRect(b.x, b.y, b.w, b.h); });
 
     let vx = target.x - start.x, vy = target.y - start.y;
@@ -195,7 +195,7 @@ function draw() {
     if (mag > 1) { 
         vx /= mag; vy /= mag;
         const bDist = getDist(start.x, start.y, -vx, -vy, L, R, T, B, blocks);
-        ctx.lineWidth = 1.5; ctx.strokeStyle = "red";
+        ctx.lineWidth = 2.5; ctx.strokeStyle = "red";
         ctx.beginPath(); ctx.moveTo(start.x, start.y);
         if (bDist !== Infinity) ctx.lineTo(start.x - vx * bDist, start.y - vy * bDist);
         ctx.stroke();
@@ -229,8 +229,8 @@ function draw() {
             ctx.beginPath(); ctx.moveTo(pathPoints[1].x, pathPoints[1].y);
             for (let i = 2; i < pathPoints.length; i++) ctx.lineTo(pathPoints[i].x, pathPoints[i].y);
             ctx.strokeStyle = "white"; ctx.stroke();
-            for (let i = 1; i < pathPoints.length; i++) drawHex(pathPoints[i].x, pathPoints[i].y, 6);
-        } else if (pathPoints.length === 2) drawHex(pathPoints[1].x, pathPoints[1].y, 6);
+            for (let i = 1; i < pathPoints.length; i++) drawHex(pathPoints[i].x, pathPoints[i].y, 10);
+        } else if (pathPoints.length === 2) drawHex(pathPoints[1].x, pathPoints[1].y, 10);
     }
     drawCharacter(start.x, start.y);
 }
@@ -247,7 +247,7 @@ const down = e => {
 
     for (let i = blocks.length - 1; i >= 0; i--) {
         const b = blocks[i];
-        if (p.x >= b.x - 10 && p.x <= b.x + b.w + 10 && p.y >= b.y - 10 && p.y <= b.y + b.h + 10) {
+        if (p.x >= b.x - 5 && p.x <= b.x + b.w + 5 && p.y >= b.y - 5 && p.y <= b.y + b.h + 5) {
             if (isDoubleTap) { blocks.splice(i, 1); draw(); return; }
             draggingBlockIndex = i; dragOffset.x = p.x - b.x; dragOffset.y = p.y - b.y;
             isDragging = true; draw(); return;
@@ -260,7 +260,7 @@ const down = e => {
         draw();
     } else {
         const dist = Math.hypot(p.x - start.x, p.y - start.y);
-        if (dist < 30) { // 小さくても掴めるよう判定は30px確保
+        if (dist < 35) {
             isDraggingStart = true;
             isDragging = true;
         } else {
